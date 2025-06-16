@@ -100,7 +100,7 @@ menu:
     mov ecx, opcion             ; buffer para almacenar
     mov edx, 2                  ; leer 2 bytes (1 char + enter)
     int 0x80
-    mov [input_len], eax        ; Save actual length read
+    mov [input_len], eax        ; Guardar la longitud real de lectura
 
     ; Evaluar opción seleccionada
     cmp byte [opcion], '1'
@@ -138,7 +138,7 @@ get_largo:
     mov [input_len], eax        ; Save actual length read
 
     call validate_and_convert_int ; Convertir y validar
-    cmp eax, -1                 ; Check for error value from conversion
+    cmp eax, -1                 ; Comprobar el valor de error de la conversión
     je .largo_error
     mov [largo], eax            ; Guardar valor en variable
     jmp get_ancho
@@ -149,7 +149,7 @@ get_largo:
     mov ecx, msg_input_error
     mov edx, len_input_error
     int 0x80
-    jmp get_largo               ; Repeat input
+    jmp get_largo               ; Repetir entrada
 
 get_ancho:
     ; Solicitar y leer ancho (similar a largo)
@@ -186,7 +186,7 @@ calculate_rect_area:
     mov ebx, [ancho]            ; Cargar ancho en EBX
     mul ebx                     ; Multiplicar EAX * EBX (resultado en EAX)
     mov [area_entero], eax      ; Guardar resultado entero
-    mov dword [area_decimal], 0 ; Rectangles always have .00 if inputs are integers
+    mov dword [area_decimal], 0 ; Los rectángulos siempre tienen .00 si las entradas son números enteros
 
     ; Mostrar mensaje de resultado
     mov eax, 4
@@ -206,7 +206,7 @@ calculate_rect_area:
     mov edx, 1
     int 0x80
 
-    ; Since we force .00 for rectangles with integer inputs
+    ; Dado que forzamos .00 para rectángulos con entradas enteras
     mov byte [decimal_part_buffer], '0'
     mov byte [decimal_part_buffer + 1], '0'
     mov eax, 4
@@ -290,22 +290,22 @@ calculate_tri_area:
     ; Calcular área del triángulo (base * altura / 2)
     mov eax, [base]             ; Cargar base
     mov ebx, [altura]           ; Cargar altura
-    mul ebx                     ; Multiplicar (result in EAX:EDX, but we only expect 32-bit so EAX is fine)
+    mul ebx                     ; Multiplicar (Resultado en EAX:EDX, pero solo esperamos 32 bits, por lo que EAX está bien)
 
-    ; Now we have base * height in EAX. We need to divide by 2 and handle decimals.
-    ; Multiply by 100 first to keep two decimal places.
+    ; Ahora tenemos base * altura en EAX. Necesitamos dividir entre 2 y gestionar decimales.
+    ; Primero multiplica por 100 para mantener dos decimales.
     mov ebx, 100
-    mul ebx                     ; EAX = (base * height) * 100 (result in EAX:EDX)
+    mul ebx                     ; EAX = (base * altura) * 100 (resultado en EAX:EDX)
 
-    mov ebx, 2                  ; Divisor is 2
-    xor edx, edx                ; Clear EDX for division
-    div ebx                     ; EAX = (base * height * 100) / 2, EDX = remainder
+    mov ebx, 2                  ; El divisor es 2
+    xor edx, edx                ; Borrar EDX para la división
+    div ebx                     ; EAX = (base * altura * 100) / 2, EDX = resto
 
-    ; EAX now holds the total area scaled by 100
-    ; We need to separate integer and decimal parts
+    ; EAX ahora tiene el área total escalada por 100
+    ; Necesitamos separar las partes enteras y decimales.
     mov ebx, 100
     xor edx, edx
-    div ebx                     ; EAX = integer part, EDX = decimal part (0-99)
+    div ebx                     ; EAX = parte entera, EDX = parte decimal (0-99)
 
     mov [area_entero], eax
     mov [area_decimal], edx
@@ -328,7 +328,7 @@ calculate_tri_area:
     mov edx, 1
     int 0x80
 
-    ; Convert and print the decimal part
+    ; Convertir e imprimir la parte decimal
     mov eax, [area_decimal]
     call print_decimal_part
 
@@ -349,7 +349,7 @@ validate_and_convert_int:
     ;         CUIDADO: EBX, ECX, EDX, ESI modificados
     ; =============================================
 
-    push ebx                    ; Save registers
+    push ebx                    ; Guardar registros
     push ecx
     push edx
     push esi
@@ -357,16 +357,16 @@ validate_and_convert_int:
     mov esi, buffer             ; Puntero al inicio del buffer
     xor eax, eax                ; Limpiar EAX (acumulador)
     xor ecx, ecx                ; Limpiar ECX (index/counter for length)
-    mov ebx, [input_len]        ; Get the length of the read input
-    dec ebx                     ; Decrement to exclude the newline character (if present)
+    mov ebx, [input_len]        ; Obtener la longitud de la entrada de lectura
+    dec ebx                     ; Decrementar para excluir el carácter de nueva línea (si está presente)
 
-    ; Handle empty input or only newline
+    ; Manejar entrada vacía o solo nueva línea
     cmp ebx, 0
     jle .invalid_input_val
 
 .convert_val:
-    cmp ecx, ebx                ; Have we processed all characters up to newline?
-    jge .done_val               ; If yes, we are done (or it's just newline)
+    cmp ecx, ebx                ; 
+    jge .done_val               ; 
 
     movzx edx, byte [esi + ecx] ; Leer siguiente byte
     cmp dl, '0'                 ; Validar que sea dígito (>= '0')
@@ -381,17 +381,16 @@ validate_and_convert_int:
     jmp .convert_val            ; Repetir
 
 .invalid_input_val:
-    mov eax, -1                 ; Set error code
+    mov eax, -1                 ; Establecer código de error
     jmp .end_val
 
 .done_val:
-    ; Check if there were any digits parsed. If EAX is still 0 and no digits were processed,
-    ; it means the input was just a newline or non-digits that were skipped initially.
-    cmp ecx, 0                  ; If no characters were processed (e.g., just newline was entered)
-    je .invalid_input_val       ; Treat as invalid
+    ; Comprueba si se analizaron dígitos. Si EAX sigue siendo 0 y no se procesaron dígitos,
+    cmp ecx, 0                  ; 
+    je .invalid_input_val       ; Tratar como inválido
 
 .end_val:
-    pop esi                     ; Restore registers
+    pop esi                     ; Restaurar registros
     pop edx
     pop ecx
     pop ebx
@@ -405,7 +404,7 @@ int_to_ascii_print:
     ; CUIDADO: EBX, ECX, EDX, EDI modificados
     ; =============================================
 
-    push eax                    ; Save EAX for later comparison if number is 0
+    push eax                    ; Guarde EAX para compararlo más tarde si el número es 0
     push ebx
     push ecx
     push edx
@@ -417,8 +416,8 @@ int_to_ascii_print:
 
     mov ebx, 10                 ; Divisor para obtener dígitos
 
-    cmp dword [esp + 20], 0     ; Check the original EAX value (pushed)
-    je .print_zero              ; If it's 0, just print '0'
+    cmp dword [esp + 20], 0     ; Verifique el valor EAX original (insertado)
+    je .print_zero              ; Si es 0, simplemente imprime '0'
 
 .next_digit_print:
     xor edx, edx                ; Limpiar EDX para división
@@ -431,7 +430,7 @@ int_to_ascii_print:
 
     inc edi                     ; Ajustar puntero al primer dígito
 
-    ; Calculate longitud del número
+    ; Calcular longitud del número
     mov edx, buffer_num + 15    ; Final del buffer
     sub edx, edi                ; EDX = longitud
 
@@ -453,7 +452,7 @@ int_to_ascii_print:
     int 0x80
 
 .end_print:
-    pop edi                     ; Restore registers
+    pop edi                     ; Restaurar registros
     pop edx
     pop ecx
     pop ebx
@@ -473,27 +472,27 @@ print_decimal_part:
     push edx
     push edi
 
-    mov edi, decimal_part_buffer + 1 ; Point to the second byte
-    mov byte [edi], 0                ; Null terminator
+    mov edi, decimal_part_buffer + 1 ; Apunta al segundo byte
+    mov byte [edi], 0                ; Terminador nulo
 
-    mov ebx, 10                      ; Divisor for tens and units
+    mov ebx, 10                      ; Divisor para decenas y unidades
 
     xor edx, edx
-    div ebx                          ; EAX = tens digit, EDX = units digit
+    div ebx                          ; EAX = dígito de las decenas, EDX = dígito de las unidades
 
-    add dl, '0'                      ; Convert units to ASCII
+    add dl, '0'                      ; Convertir unidades a ASCII
     mov [edi], dl
-    dec edi                          ; Move to first byte
+    dec edi                          ; Mover al primer byte
 
-    mov dl, al                       ; Get tens digit (from EAX)
-    add dl, '0'                      ; Convert tens to ASCII
+    mov dl, al                       ; Obtener el dígito de las decenas (de EAX)
+    add dl, '0'                      ; Convertir decenas a ASCII
     mov [edi], dl
 
-    ; Print the two decimal digits
+    ; Imprima los dos dígitos decimales
     mov eax, 4                       ; sys_write
     mov ebx, 1                       ; stdout
     mov ecx, decimal_part_buffer
-    mov edx, 2                       ; Always 2 digits
+    mov edx, 2                       ; Siempre 2 dígitos
     int 0x80
 
     pop edi
